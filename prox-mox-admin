@@ -1,1 +1,703 @@
+# Cloudflare Tunnel Management Guide - homelab (LXC Container)
 
+## 📋 Table of Contents
+
+- [Tunnel Overview](#tunnel-overview)
+- [Initial Installation](#initial-installation)
+- [LXC Container Management](#lxc-container-management)
+- [Cloudflared Service Management](#cloudflared-service-management)
+- [Updates and Maintenance](#updates-and-maintenance)
+- [Tunnel Health Monitoring](#tunnel-health-monitoring)
+- [Troubleshooting](#troubleshooting)
+- [Configuration Management](#configuration-management)
+- [LXC-Specific Operations](#lxc-specific-operations)
+- [Performance Optimization](#performance-optimization)
+- [Monitoring and Alerting](#monitoring-and-alerting)
+- [Security Best Practices](#security-best-practices)
+- [Quick Reference Commands](#quick-reference-commands)
+- [Emergency Recovery](#emergency-recovery)
+- [Additional Resources](#additional-resources)
+
+---
+
+## Tunnel Overview
+
+**Tunnel Name:** homelab  
+**Tunnel ID:** `b25ce30f-f75b-433f-ba0e-a11f792c7cbc`  
+**Connector ID:** `e140ae77-08ce-4444-a70f-fb6476b15e51`  
+**Connector Type:** cloudflared (systemd service)  
+**Deployment:** Debian/Ubuntu LXC Container
+
+### Published Application Routes
+
+| Service | Public Hostname | Internal URL |
+|---------|----------------|--------------|
+| Grafana | grafana.codeandcamera.me | https://192.168.1.80:3000 |
+| Prometheus | prometheus.codeandcamera.me | http://192.168.1.80:9090 |
+| Dashboard | dashboard.codeandcamera.me | http://192.168.1.162:7576 |
+
+---
+
+## Initial Installation
+
+### Installing cloudflared on Debian/Ubuntu LXC
+```bash
+# Add Cloudflare GPG key
+sudo mkdir -p --mode=0755 /usr/share/keyrings
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee \\
+  /usr/share/keyrings/cloudflare-public-v2.gpg >/dev/null
+
+# Add this repo to your apt repositories
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] \\
+  https://pkg.cloudflare.com/cloudflared any main' | sudo tee \\
+  /etc/apt/sources.list.d/cloudflared.list
+
+# Install cloudflared
+sudo apt-get update && sudo apt-get install cloudflared
+```
+
+### Installing as a Service
+```bash
+# Install cloudflared as a systemd service (replace token with your actual token)
+sudo cloudflared service install eyJhIjoiZD...
+```
+
+> ⚠️ **Important:** Keep your tunnel token secure and never commit it to public repositories.
+
+---
+
+## LXC Container Management
+
+### 1. Accessing the LXC Container
+```bash
+# From Proxmox host - list containers
+pct list
+
+# Enter the container (replace 100 with your container ID)
+pct enter <container_id>
+
+# Or via SSH if configured
+ssh user@<container_ip>
+```
+
+### 2. Checking Container Status from Proxmox Host
+```bash
+# Check if container is running
+pct status <container_id>
+
+# Start container
+pct start <container_id>
+
+# Stop container
+pct stop <container_id>
+
+# Restart container
+pct reboot <container_id>
+
+# View container configuration
+pct config <container_id>
+```
+
+### 3. Container Resource Monitoring
+```bash
+# From Proxmox host - monitor resource usage
+pct exec <container_id> -- top
+
+# Check memory usage
+pct exec <container_id> -- free -h
+
+# Check disk usage
+pct exec <container_id> -- df -h
+```
+
+---
+
+## Cloudflared Service Management
+
+### Service Control
+```bash
+# Check service status
+sudo systemctl status cloudflared
+
+# Start the service
+sudo systemctl start cloudflared
+
+# Stop the service
+sudo systemctl stop cloudflared
+
+# Restart the service
+sudo systemctl restart cloudflared
+
+# Enable service at boot
+sudo systemctl enable cloudflared
+
+# Disable service at boot
+sudo systemctl disable cloudflared
+```
+
+### Viewing Logs
+```bash
+# View real-time logs
+sudo journalctl -u cloudflared -f
+
+# View last 100 lines
+sudo journalctl -u cloudflared -n 100
+
+# View logs with timestamps
+sudo journalctl -u cloudflared --since "1 hour ago"
+
+# View logs from today
+sudo journalctl -u cloudflared --since today
+
+# View logs from specific date
+sudo journalctl -u cloudflared --since "2025-01-04"
+
+# Export logs to file
+sudo journalctl -u cloudflared > cloudflared-logs.txt
+```
+
+---
+
+## Updates and Maintenance
+
+### 1. Updating cloudflared
+```bash
+# Update package list
+sudo apt-get update
+
+# Check available updates
+apt list --upgradable | grep cloudflared
+
+# Upgrade cloudflared
+sudo apt-get upgrade cloudflared
+
+# Or upgrade all packages
+sudo apt-get upgrade
+
+# After update, restart the service
+sudo systemctl restart cloudflared
+```
+
+### 2. Full System Update
+```bash
+# Update package lists
+sudo apt-get update
+
+# Upgrade all packages
+sudo apt-get upgrade -y
+
+# Upgrade distribution (if needed)
+sudo apt-get dist-upgrade -y
+
+# Remove unused packages
+sudo apt-get autoremove -y
+
+# Clean package cache
+sudo apt-get clean
+```
+
+### 3. Backup Configuration
+```bash
+# Backup cloudflared configuration
+sudo cp -r /etc/cloudflared /etc/cloudflared.backup
+
+# Backup systemd service file
+sudo cp /etc/systemd/system/cloudflared.service /etc/systemd/system/cloudflared.service.backup
+
+# Or create a tar archive
+sudo tar -czf cloudflared-backup-$(date +%Y%m%d).tar.gz /etc/cloudflared /etc/systemd/system/cloudflared.service
+```
+
+---
+
+## Tunnel Health Monitoring
+
+### 1. Check Service Health
+```bash
+# Check if cloudflared is running
+sudo systemctl is-active cloudflared
+
+# Check service status with details
+sudo systemctl status cloudflared
+
+# Check if service is enabled
+sudo systemctl is-enabled cloudflared
+```
+
+### 2. Check Tunnel Connectivity
+```bash
+# View tunnel information
+cloudflared tunnel info b25ce30f-f75b-433f-ba0e-a11f792c7cbc
+
+# List all tunnels
+cloudflared tunnel list
+
+# Check cloudflared version
+cloudflared --version
+```
+
+### 3. Network Connectivity Tests
+```bash
+# Test connection to Cloudflare
+ping -c 4 1.1.1.1
+
+# Test DNS resolution for your domains
+nslookup grafana.codeandcamera.me
+nslookup prometheus.codeandcamera.me
+nslookup dashboard.codeandcamera.me
+
+# Test internal service connectivity
+curl -I http://192.168.1.80:3000
+curl -I http://192.168.1.80:9090
+curl -I http://192.168.1.162:7576
+
+# Test public access
+curl -I https://grafana.codeandcamera.me
+curl -I https://prometheus.codeandcamera.me
+curl -I https://dashboard.codeandcamera.me
+```
+
+### 4. Monitor Active Connections
+```bash
+# Check established connections
+sudo netstat -tunap | grep cloudflared
+
+# Or using ss command
+sudo ss -tunap | grep cloudflared
+
+# Check listening ports
+sudo lsof -i -P -n | grep cloudflared
+```
+
+### 5. Resource Usage Monitoring
+```bash
+# Check CPU and memory usage
+top -p $(pgrep cloudflared)
+
+# Or using htop (if installed)
+htop -p $(pgrep cloudflared)
+
+# Check process details
+ps aux | grep cloudflared
+
+# Memory usage only
+ps -o pid,user,%mem,command -p $(pgrep cloudflared)
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Service Not Starting
+```bash
+# Check service status
+sudo systemctl status cloudflared
+
+# View detailed logs
+sudo journalctl -u cloudflared -n 50 --no-pager
+
+# Check for configuration errors
+sudo cloudflared tunnel info b25ce30f-f75b-433f-ba0e-a11f792c7cbc
+
+# Restart the service
+sudo systemctl restart cloudflared
+```
+
+#### Tunnel Connection Issues
+```bash
+# Check if tunnel is connecting
+sudo journalctl -u cloudflared | grep -i "connection\\|error\\|failed"
+
+# Verify network connectivity
+ping -c 4 1.1.1.1
+ping -c 4 cloudflare.com
+
+# Check firewall rules (if applicable)
+sudo iptables -L -n
+
+# Test DNS resolution
+nslookup region1.v2.argotunnel.com
+```
+
+#### Service Crashes or Restarts
+```bash
+# Check for crashes in logs
+sudo journalctl -u cloudflared | grep -i "panic\\|crash\\|fatal"
+
+# Check system resources
+free -h
+df -h
+
+# Check for OOM (Out of Memory) kills
+sudo dmesg | grep -i "cloudflared"
+
+# Increase service restart limits if needed
+sudo systemctl edit cloudflared
+# Add:
+# [Service]
+# Restart=always
+# RestartSec=10
+```
+
+#### Cannot Access Internal Services
+```bash
+# Test connectivity from LXC to internal services
+curl -v http://192.168.1.80:3000
+curl -v http://192.168.1.80:9090
+curl -v http://192.168.1.162:7576
+
+# Check routing
+ip route show
+
+# Check if services are listening
+nc -zv 192.168.1.80 3000
+nc -zv 192.168.1.80 9090
+nc -zv 192.168.1.162 7576
+
+# Verify LXC network configuration
+ip addr show
+```
+
+#### High CPU/Memory Usage
+```bash
+# Check resource usage
+top -b -n 1 | grep cloudflared
+
+# Check for memory leaks
+ps aux | grep cloudflared
+
+# Restart service to clear potential issues
+sudo systemctl restart cloudflared
+
+# Consider setting resource limits in systemd
+sudo systemctl edit cloudflared
+# Add:
+# [Service]
+# MemoryMax=512M
+# CPUQuota=50%
+```
+
+---
+
+## Configuration Management
+
+### View Current Configuration
+```bash
+# View tunnel configuration
+sudo cat /etc/cloudflared/config.yml
+
+# View service configuration
+sudo systemctl cat cloudflared
+
+# View service file location
+sudo systemctl show cloudflared | grep FragmentPath
+```
+
+### Modifying Service Configuration
+```bash
+# Edit service file
+sudo systemctl edit cloudflared
+
+# Or edit directly (not recommended)
+sudo nano /etc/systemd/system/cloudflared.service
+
+# After editing, reload systemd
+sudo systemctl daemon-reload
+
+# Restart service
+sudo systemctl restart cloudflared
+```
+
+### Rotating Tunnel Token
+
+If you need to refresh the tunnel token:
+
+1. Generate new token from Cloudflare Dashboard
+2. Stop the service:
+```bash
+sudo systemctl stop cloudflared
+```
+
+3. Uninstall the old service:
+```bash
+sudo cloudflared service uninstall
+```
+
+4. Install with new token:
+```bash
+sudo cloudflared service install eyJhIjoiZD...[NEW_TOKEN]
+```
+
+5. Start the service:
+```bash
+sudo systemctl start cloudflared
+sudo systemctl status cloudflared
+```
+
+---
+
+## LXC-Specific Operations
+
+### Container Snapshots (from Proxmox Host)
+```bash
+# Create snapshot
+pct snapshot <container_id> snapshot-name --description "Before cloudflared update"
+
+# List snapshots
+pct listsnapshot <container_id>
+
+# Rollback to snapshot
+pct rollback <container_id> snapshot-name
+
+# Delete snapshot
+pct delsnapshot <container_id> snapshot-name
+```
+
+### Container Backup (from Proxmox Host)
+```bash
+# Backup container
+vzdump <container_id> --compress zstd --mode snapshot
+
+# List backups
+ls -lh /var/lib/vz/dump/
+
+# Restore from backup
+pct restore <new_container_id> /var/lib/vz/dump/vzdump-lxc-<container_id>-*.tar.zst
+```
+
+### Container Resource Management
+```bash
+# View current resource allocation
+pct config <container_id> | grep -E "cores|memory|swap"
+
+# Increase memory (from Proxmox host)
+pct set <container_id> --memory 2048
+
+# Increase CPU cores
+pct set <container_id> --cores 2
+
+# Set swap
+pct set <container_id> --swap 1024
+```
+
+### Network Configuration
+```bash
+# From inside container - check IP
+ip addr show
+
+# Check default gateway
+ip route show
+
+# From Proxmox host - view container network config
+pct config <container_id> | grep net
+
+# Modify network settings (Proxmox host)
+pct set <container_id> --net0 name=eth0,bridge=vmbr0,ip=dhcp
+```
+
+---
+
+## Performance Optimization
+
+### System Tuning
+```bash
+# Check system limits
+ulimit -a
+
+# Increase file descriptor limits (if needed)
+sudo nano /etc/security/limits.conf
+# Add:
+# * soft nofile 65536
+# * hard nofile 65536
+
+# Apply without reboot
+sudo sysctl -p
+```
+
+### Service Optimization
+```bash
+# Configure service for better performance
+sudo systemctl edit cloudflared
+```
+
+Add to override file:
+```ini
+[Service]
+# Restart on failure
+Restart=always
+RestartSec=10
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+# Better startup
+TimeoutStartSec=60
+```
+
+---
+
+## Monitoring and Alerting
+
+### Simple Monitoring Script
+
+Create monitoring script:
+```bash
+sudo nano /usr/local/bin/check-cloudflared.sh
+```
+
+Add content:
+```bash
+#!/bin/bash
+
+# Check if cloudflared is running
+if ! systemctl is-active --quiet cloudflared; then
+    echo "ALERT: cloudflared is not running!"
+    systemctl restart cloudflared
+    echo "Attempted restart at $(date)" >> /var/log/cloudflared-monitor.log
+fi
+
+# Check tunnel connectivity
+if ! curl -s -o /dev/null -w "%{http_code}" https://grafana.codeandcamera.me | grep -q "200\\|301\\|302"; then
+    echo "WARNING: Cannot reach grafana.codeandcamera.me at $(date)" >> /var/log/cloudflared-monitor.log
+fi
+```
+
+Make executable:
+```bash
+sudo chmod +x /usr/local/bin/check-cloudflared.sh
+```
+
+Add to crontab:
+```bash
+sudo crontab -e
+# Add: */5 * * * * /usr/local/bin/check-cloudflared.sh
+```
+
+### Health Check Endpoint
+```bash
+# Check if cloudflared metrics are available
+curl http://localhost:8080/metrics 2>/dev/null | head -20
+```
+
+---
+
+## Security Best Practices
+
+1. **Keep system updated**
+```bash
+   sudo apt-get update && sudo apt-get upgrade
+```
+
+2. **Monitor logs regularly**
+```bash
+   sudo journalctl -u cloudflared --since "1 day ago" | grep -i "error\\|warn"
+```
+
+3. **Limit container privileges** (from Proxmox host)
+```bash
+   # Ensure unprivileged container
+   pct config <container_id> | grep unprivileged
+```
+
+4. **Firewall configuration** (if needed)
+```bash
+   # Allow only necessary traffic
+   sudo ufw allow 443/tcp
+   sudo ufw allow 80/tcp
+   sudo ufw enable
+```
+
+5. **Regular backups**
+   - Create snapshots before major changes
+   - Maintain regular backup schedule
+
+---
+
+## Quick Reference Commands
+
+### Service Management
+| Command | Description |
+|---------|-------------|
+| `sudo systemctl status cloudflared` | Check status |
+| `sudo systemctl restart cloudflared` | Restart service |
+| `sudo journalctl -u cloudflared -f` | View logs |
+| `sudo systemctl enable cloudflared` | Enable at boot |
+
+### Updates
+| Command | Description |
+|---------|-------------|
+| `sudo apt-get update` | Update package list |
+| `sudo apt-get upgrade cloudflared` | Upgrade cloudflared |
+| `sudo systemctl restart cloudflared` | Restart after update |
+
+### Health Checks
+| Command | Description |
+|---------|-------------|
+| `systemctl is-active cloudflared` | Running status |
+| `cloudflared tunnel info <tunnel_id>` | Tunnel info |
+| `curl -I https://grafana.codeandcamera.me` | Test public access |
+
+### LXC Operations (from Proxmox host)
+| Command | Description |
+|---------|-------------|
+| `pct list` | List containers |
+| `pct status <container_id>` | Container status |
+| `pct enter <container_id>` | Enter container |
+| `pct restart <container_id>` | Restart container |
+| `pct snapshot <container_id> <name>` | Create snapshot |
+
+---
+
+## Emergency Recovery
+
+### If tunnel is completely broken:
+```bash
+# 1. Stop the service
+sudo systemctl stop cloudflared
+
+# 2. Uninstall the service
+sudo cloudflared service uninstall
+
+# 3. Reinstall cloudflared
+sudo apt-get update
+sudo apt-get install --reinstall cloudflared
+
+# 4. Reinstall the service with token from dashboard
+sudo cloudflared service install eyJhIjoiZD...[TOKEN_FROM_DASHBOARD]
+
+# 5. Start and verify
+sudo systemctl start cloudflared
+sudo systemctl status cloudflared
+```
+
+---
+
+## Additional Resources
+
+- 📚 [Cloudflare Tunnel Documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+- 💻 [Cloudflared GitHub](https://github.com/cloudflare/cloudflared)
+- 🌐 [Dashboard URL](https://one.dash.cloudflare.com/d111f4297a75f3fd53fdafb20a66a021/networks/connectors)
+- 📖 [Proxmox LXC Documentation](https://pve.proxmox.com/wiki/Linux_Container)
+
+---
+
+## Contributing
+
+Feel free to submit issues or pull requests to improve this documentation.
+
+## License
+
+This documentation is provided as-is for educational and operational purposes.
+
+---
+
+**⚠️ Important Notes:**
+- Always create a snapshot before making major changes to your LXC container
+- Keep your tunnel token secure and never share it publicly
+- Replace `<container_id>` and `<tunnel_id>` with your actual values
+
+**Last Updated:** January 2026  
+**Environment:** Debian/Ubuntu LXC Container on Proxmox
