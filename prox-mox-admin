@@ -503,8 +503,6 @@ pct set ${CONTAINER_ID} --net0 name=eth0,bridge=vmbr0,ip=dhcp
 
 ---
 
----
-
 ## Performance Optimization
 
 ### System Tuning
@@ -542,8 +540,6 @@ CPUQuota=50%
 # Better startup
 TimeoutStartSec=60
 ```
-
----
 
 ---
 
@@ -594,8 +590,6 @@ curl http://localhost:8080/metrics 2>/dev/null | head -20
 
 ---
 
----
-
 ## Security Best Practices
 
 1. **Keep system updated**
@@ -625,8 +619,6 @@ curl http://localhost:8080/metrics 2>/dev/null | head -20
 5. **Regular backups**
    - Create snapshots before major changes
    - Maintain regular backup schedule
-
----
 
 ---
 
@@ -665,8 +657,6 @@ curl http://localhost:8080/metrics 2>/dev/null | head -20
 
 ---
 
----
-
 ## Emergency Recovery
 
 ### If tunnel is completely broken:
@@ -688,8 +678,6 @@ sudo cloudflared service install eyJhIjoiZD...[TOKEN_FROM_DASHBOARD]
 sudo systemctl start cloudflared
 sudo systemctl status cloudflared
 ```
-
----
 
 ---
 
