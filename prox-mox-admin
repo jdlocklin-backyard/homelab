@@ -44,12 +44,12 @@
 ```bash
 # Add Cloudflare GPG key
 sudo mkdir -p --mode=0755 /usr/share/keyrings
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee \\
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee \
   /usr/share/keyrings/cloudflare-public-v2.gpg >/dev/null
 
 # Add this repo to your apt repositories
-echo 'deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] \\
-  https://pkg.cloudflare.com/cloudflared any main' | sudo tee \\
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] \
+  https://pkg.cloudflare.com/cloudflared any main' | sudo tee \
   /etc/apt/sources.list.d/cloudflared.list
 
 # Install cloudflared
@@ -73,41 +73,41 @@ sudo cloudflared service install eyJhIjoiZD...
 # From Proxmox host - list containers
 pct list
 
-# Enter the container (replace 100 with your container ID)
-pct enter <container_id>
+# Enter the container
+pct enter ${CONTAINER_ID}  # Replace with your container ID (e.g., 100)
 
 # Or via SSH if configured
-ssh user@<container_ip>
+ssh user@${CONTAINER_IP}  # Replace with your container IP (e.g., 192.168.1.100)
 ```
 
 ### 2. Checking Container Status from Proxmox Host
 ```bash
 # Check if container is running
-pct status <container_id>
+pct status ${CONTAINER_ID}  # Replace with your container ID
 
 # Start container
-pct start <container_id>
+pct start ${CONTAINER_ID}
 
 # Stop container
-pct stop <container_id>
+pct stop ${CONTAINER_ID}
 
 # Restart container
-pct reboot <container_id>
+pct reboot ${CONTAINER_ID}
 
 # View container configuration
-pct config <container_id>
+pct config ${CONTAINER_ID}
 ```
 
 ### 3. Container Resource Monitoring
 ```bash
 # From Proxmox host - monitor resource usage
-pct exec <container_id> -- top
+pct exec ${CONTAINER_ID} -- top  # Replace with your container ID
 
 # Check memory usage
-pct exec <container_id> -- free -h
+pct exec ${CONTAINER_ID} -- free -h
 
 # Check disk usage
-pct exec <container_id> -- df -h
+pct exec ${CONTAINER_ID} -- df -h
 ```
 
 ---
@@ -162,6 +162,7 @@ sudo journalctl -u cloudflared > cloudflared-logs.txt
 
 ### 1. Updating cloudflared
 ```bash
+# Check for cloudflared updates and upgrade
 # Update package list
 sudo apt-get update
 
@@ -180,6 +181,7 @@ sudo systemctl restart cloudflared
 
 ### 2. Full System Update
 ```bash
+# Perform complete system update and cleanup
 # Update package lists
 sudo apt-get update
 
@@ -198,13 +200,14 @@ sudo apt-get clean
 
 ### 3. Backup Configuration
 ```bash
+# Create backups of cloudflared configuration files
 # Backup cloudflared configuration
 sudo cp -r /etc/cloudflared /etc/cloudflared.backup
 
 # Backup systemd service file
 sudo cp /etc/systemd/system/cloudflared.service /etc/systemd/system/cloudflared.service.backup
 
-# Or create a tar archive
+# Or create a tar archive with date stamp
 sudo tar -czf cloudflared-backup-$(date +%Y%m%d).tar.gz /etc/cloudflared /etc/systemd/system/cloudflared.service
 ```
 
@@ -238,6 +241,7 @@ cloudflared --version
 
 ### 3. Network Connectivity Tests
 ```bash
+# Test network connectivity and DNS resolution
 # Test connection to Cloudflare
 ping -c 4 1.1.1.1
 
@@ -308,7 +312,7 @@ sudo systemctl restart cloudflared
 #### Tunnel Connection Issues
 ```bash
 # Check if tunnel is connecting
-sudo journalctl -u cloudflared | grep -i "connection\\|error\\|failed"
+sudo journalctl -u cloudflared | grep -i "connection\|error\|failed"
 
 # Verify network connectivity
 ping -c 4 1.1.1.1
@@ -324,7 +328,7 @@ nslookup region1.v2.argotunnel.com
 #### Service Crashes or Restarts
 ```bash
 # Check for crashes in logs
-sudo journalctl -u cloudflared | grep -i "panic\\|crash\\|fatal"
+sudo journalctl -u cloudflared | grep -i "panic\|crash\|fatal"
 
 # Check system resources
 free -h
@@ -443,43 +447,43 @@ sudo systemctl status cloudflared
 ### Container Snapshots (from Proxmox Host)
 ```bash
 # Create snapshot
-pct snapshot <container_id> snapshot-name --description "Before cloudflared update"
+pct snapshot ${CONTAINER_ID} snapshot-name --description "Before cloudflared update"  # Replace with your container ID
 
 # List snapshots
-pct listsnapshot <container_id>
+pct listsnapshot ${CONTAINER_ID}
 
 # Rollback to snapshot
-pct rollback <container_id> snapshot-name
+pct rollback ${CONTAINER_ID} snapshot-name
 
 # Delete snapshot
-pct delsnapshot <container_id> snapshot-name
+pct delsnapshot ${CONTAINER_ID} snapshot-name
 ```
 
 ### Container Backup (from Proxmox Host)
 ```bash
 # Backup container
-vzdump <container_id> --compress zstd --mode snapshot
+vzdump ${CONTAINER_ID} --compress zstd --mode snapshot  # Replace with your container ID
 
 # List backups
 ls -lh /var/lib/vz/dump/
 
 # Restore from backup
-pct restore <new_container_id> /var/lib/vz/dump/vzdump-lxc-<container_id>-*.tar.zst
+pct restore ${NEW_CONTAINER_ID} /var/lib/vz/dump/vzdump-lxc-${CONTAINER_ID}-*.tar.zst  # Replace with appropriate IDs
 ```
 
 ### Container Resource Management
 ```bash
 # View current resource allocation
-pct config <container_id> | grep -E "cores|memory|swap"
+pct config ${CONTAINER_ID} | grep -E "cores|memory|swap"  # Replace with your container ID
 
 # Increase memory (from Proxmox host)
-pct set <container_id> --memory 2048
+pct set ${CONTAINER_ID} --memory 2048
 
 # Increase CPU cores
-pct set <container_id> --cores 2
+pct set ${CONTAINER_ID} --cores 2
 
 # Set swap
-pct set <container_id> --swap 1024
+pct set ${CONTAINER_ID} --swap 1024
 ```
 
 ### Network Configuration
@@ -491,10 +495,10 @@ ip addr show
 ip route show
 
 # From Proxmox host - view container network config
-pct config <container_id> | grep net
+pct config ${CONTAINER_ID} | grep net  # Replace with your container ID
 
 # Modify network settings (Proxmox host)
-pct set <container_id> --net0 name=eth0,bridge=vmbr0,ip=dhcp
+pct set ${CONTAINER_ID} --net0 name=eth0,bridge=vmbr0,ip=dhcp
 ```
 
 ---
@@ -548,9 +552,10 @@ Create monitoring script:
 sudo nano /usr/local/bin/check-cloudflared.sh
 ```
 
-Add content:
+Add the following content to the script:
 ```bash
 #!/bin/bash
+# Cloudflared monitoring and auto-restart script
 
 # Check if cloudflared is running
 if ! systemctl is-active --quiet cloudflared; then
@@ -560,20 +565,21 @@ if ! systemctl is-active --quiet cloudflared; then
 fi
 
 # Check tunnel connectivity
-if ! curl -s -o /dev/null -w "%{http_code}" https://grafana.codeandcamera.me | grep -q "200\\|301\\|302"; then
+if ! curl -s -o /dev/null -w "%{http_code}" https://grafana.codeandcamera.me | grep -q "200\|301\|302"; then
     echo "WARNING: Cannot reach grafana.codeandcamera.me at $(date)" >> /var/log/cloudflared-monitor.log
 fi
 ```
 
-Make executable:
+Make the script executable:
 ```bash
 sudo chmod +x /usr/local/bin/check-cloudflared.sh
 ```
 
-Add to crontab:
+Add to crontab for automatic monitoring every 5 minutes:
 ```bash
 sudo crontab -e
-# Add: */5 * * * * /usr/local/bin/check-cloudflared.sh
+# Add this line:
+# */5 * * * * /usr/local/bin/check-cloudflared.sh
 ```
 
 ### Health Check Endpoint
@@ -593,13 +599,13 @@ curl http://localhost:8080/metrics 2>/dev/null | head -20
 
 2. **Monitor logs regularly**
 ```bash
-   sudo journalctl -u cloudflared --since "1 day ago" | grep -i "error\\|warn"
+   sudo journalctl -u cloudflared --since "1 day ago" | grep -i "error\|warn"
 ```
 
 3. **Limit container privileges** (from Proxmox host)
 ```bash
    # Ensure unprivileged container
-   pct config <container_id> | grep unprivileged
+   pct config ${CONTAINER_ID} | grep unprivileged  # Replace with your container ID
 ```
 
 4. **Firewall configuration** (if needed)
@@ -637,17 +643,17 @@ curl http://localhost:8080/metrics 2>/dev/null | head -20
 | Command | Description |
 |---------|-------------|
 | `systemctl is-active cloudflared` | Running status |
-| `cloudflared tunnel info <tunnel_id>` | Tunnel info |
+| `cloudflared tunnel info ${TUNNEL_ID}` | Tunnel info (replace with tunnel ID) |
 | `curl -I https://grafana.codeandcamera.me` | Test public access |
 
 ### LXC Operations (from Proxmox host)
 | Command | Description |
 |---------|-------------|
 | `pct list` | List containers |
-| `pct status <container_id>` | Container status |
-| `pct enter <container_id>` | Enter container |
-| `pct restart <container_id>` | Restart container |
-| `pct snapshot <container_id> <name>` | Create snapshot |
+| `pct status ${CONTAINER_ID}` | Container status (replace with container ID) |
+| `pct enter ${CONTAINER_ID}` | Enter container (replace with container ID) |
+| `pct restart ${CONTAINER_ID}` | Restart container (replace with container ID) |
+| `pct snapshot ${CONTAINER_ID} ${NAME}` | Create snapshot (replace with container ID and name) |
 
 ---
 
@@ -697,7 +703,7 @@ This documentation is provided as-is for educational and operational purposes.
 **⚠️ Important Notes:**
 - Always create a snapshot before making major changes to your LXC container
 - Keep your tunnel token secure and never share it publicly
-- Replace `<container_id>` and `<tunnel_id>` with your actual values
+- Replace `${CONTAINER_ID}` and `${TUNNEL_ID}` with your actual values
 
 **Last Updated:** January 2026  
 **Environment:** Debian/Ubuntu LXC Container on Proxmox
