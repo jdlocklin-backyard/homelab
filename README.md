@@ -4,7 +4,7 @@
 
 ## Overview
 
-This setup uses **Cloudflare Zero Trust** to secure access to self-hosted applications through Cloudflare Tunnel, with access controlled by policies that authenticate users via email and One-Time PIN. 
+This setup uses **Cloudflare Zero Trust** to secure access to self-hosted applications through Cloudflare Tunnel, with access controlled by policies that authenticate users via email and One-Time PIN.[...]
 
 ---
 
@@ -73,12 +73,14 @@ To access protected applications, users must:
 
 ### Active Connectors
 
-The tunnel has **2 active connector instances** for redundancy:
+The tunnel has **2 active connector instances** for redundancy, running as LXC containers on Proxmox:
 
-| Connector ID | Version |
-|--------------|---------|
-| `e140ae77-08ce-4444-a70f-fb6476b15e51` | 2025.11.1 |
-| `e3fe5624-0d9f-4418-a492-ef38095056e6` | 2025.11.1 |
+| Connector ID | Version | Host |
+|--------------|---------|------|
+| `e140ae77-08ce-4444-a70f-fb6476b15e51` | 2025.11.1 | LXC 3100 |
+| `e3fe5624-0d9f-4418-a492-ef38095056e6` | 2025.11.1 | LXC 3200 |
+
+**Proxmox Host:** [https://192.168.1.193:8006/](https://192.168.1.193:8006/)
 
 ### Installation Command
 
@@ -163,6 +165,7 @@ All services run on private IP addresses in the `192.168.1.0/24` subnet:
 | `192.168.1.80` | Grafana | 3000 |
 | `192.168.1.80` | Prometheus | 9090 |
 | `192.168.1.162` | Dashboard | 7576 |
+| `192.168.1.193` | Proxmox (LXC Host) | 8006 |
 
 ---
 
@@ -188,9 +191,10 @@ As documented in the Cloudflare docs, this setup enables private network access 
 - **Two cloudflared connectors** provide redundancy
 - If one connector fails, the other maintains connectivity
 - Both connectors are running the same version (`2025.11.1`)
+- Connectors run as LXC containers (3100 and 3200) on Proxmox
 
 ---
 
 ## Summary
 
-This is a well-configured Zero Trust setup providing secure access to three homelab applications (**Grafana**, **Prometheus**, and a **Dashboard**) through Cloudflare's edge network. Access is restricted to a single authorized user with geographic and authentication requirements enforced at the edge. 
+This is a well-configured Zero Trust setup providing secure access to three homelab applications (**Grafana**, **Prometheus**, and a **Dashboard**) through Cloudflare's edge network. Access is restric[...]
