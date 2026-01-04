@@ -468,7 +468,7 @@ vzdump ${CONTAINER_ID} --compress zstd --mode snapshot  # Replace with your cont
 ls -lh /var/lib/vz/dump/
 
 # Restore from backup
-pct restore ${NEW_CONTAINER_ID} /var/lib/vz/dump/vzdump-lxc-${CONTAINER_ID}-*.tar.zst  # Replace with appropriate IDs
+pct restore ${NEW_CONTAINER_ID} /var/lib/vz/dump/vzdump-lxc-${CONTAINER_ID}-*.tar.zst  # NEW_CONTAINER_ID = target ID, CONTAINER_ID = source backup ID
 ```
 
 ### Container Resource Management
